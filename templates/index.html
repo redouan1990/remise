@@ -1,0 +1,3632 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Système de Gestion de Remise de Matériel - Amendis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: linear-gradient(135deg, #f5f7fa 0%, #adb5bd2e 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Header with smooth loading animation */
+    header {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-20px);
+      animation: slideInFade 0.8s ease-out forwards;
+    }
+    
+    @keyframes slideInFade {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    
+    header img { 
+      height: 120px;
+      opacity: 0;
+      animation: logoFade 1s ease-out 0.5s forwards;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+    
+    @keyframes logoFade {
+      to { opacity: 1; }
+    }
+    
+    .header-title { 
+      flex-grow: 1; 
+      text-align: center;
+      opacity: 0;
+      animation: titleSlide 1s ease-out 0.3s forwards;
+    }
+    
+    @keyframes titleSlide {
+      to { opacity: 1; }
+    }
+    
+    .header-title h2 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.8rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header-title p {
+      margin: 0.5rem 0 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Navigation Menu */
+    .nav-menu {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-bottom: 3px solid #696969;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+      padding: 0;
+      margin: 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .nav-menu .nav-tabs {
+      border-bottom: none;
+      justify-content: center;
+    }
+    
+    .nav-menu .nav-link {
+      background: transparent;
+      border: none;
+      color: #495057;
+      font-weight: 500;
+      padding: 1rem 2rem;
+      margin: 0 0.5rem;
+      border-radius: 0;
+      transition: all 0.3s ease;
+      position: relative;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.9rem;
+    }
+    
+    .nav-menu .nav-link:hover {
+      color: #dc3545;
+      background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+      transform: translateY(-2px);
+    }
+    
+    .nav-menu .nav-link.active {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .nav-menu .nav-link i {
+      margin-right: 0.5rem;
+      font-size: 1.1rem;
+    }
+    
+    .nav-menu .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+    }
+    
+    .nav-menu .nav-link:hover::after {
+      width: 80%;
+    }
+    
+    .nav-menu .nav-link.active::after {
+      width: 100%;
+    }
+
+    /* Main Container */
+    .main-container {
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .content-section {
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+    }
+    
+    .content-section.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .content {
+      background: white;
+      border-radius: 15px;
+      padding: 2.5rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Form sections styling */
+    .form-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid #696969;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .form-section h5 {
+      color: #696969;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .agreement-section {
+      border: 2px solid #696969;
+      padding: 2rem;
+      margin-top: 2rem;
+      border-radius: 12px;
+      background: linear-gradient(45deg, #828385, #b5c2cd, #9aa3ab 100%);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .agreement-section h4 {
+      color: #696969;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.3rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .signature-block {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      gap: 2rem;
+    }
+    
+    .signature-block div {
+      text-align: center;
+      flex: 1;
+      background: rgba(255,255,255,0.5);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    
+    .signature-block hr {
+      margin-top: 2rem;
+      height: 2px;
+      background-color: #000;
+      border: none;
+    }
+
+    /* Data Analysis Section */
+    .analytics-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-left: 4px solid #dc3545;
+      transition: transform 0.3s ease;
+    }
+    
+    .analytics-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .analytics-card h5 {
+      color: #dc3545;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 1rem 0;
+    }
+
+    /* Admin Section */
+    .admin-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #6c757d;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .user-item {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #dee2e6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .user-item:hover {
+      background: #f8f9fa;
+      border-color: #696969;
+    }
+
+    /* History Section */
+    .history-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border-left: 4px solid #28a745;
+      transition: all 0.3s ease;
+    }
+    
+    .history-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .history-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .history-ref {
+      font-weight: bold;
+      color: #dc3545;
+      font-size: 1.1rem;
+    }
+    
+    .history-date {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    /* Details Modal */
+    .details-modal-content {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    
+    .detail-row {
+      display: flex;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: #495057;
+      min-width: 150px;
+      flex-shrink: 0;
+    }
+    
+    .detail-value {
+      color: #212529;
+      flex: 1;
+    }
+    
+    .detail-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .detail-section h6 {
+      color: #dc3545;
+      font-weight: 600;
+      border-bottom: 2px solid #dc3545;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Form controls styling */
+    .form-control:focus, .form-select:focus {
+      border-color: #696969;
+      box-shadow: 0 0 0 0.25rem rgba(105, 105, 105, 0.25);
+    }
+    
+    .is-invalid {
+      border-color: #dc3545 !important;
+    }
+    
+    .is-invalid:focus {
+      box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+    }
+    
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border: none;
+      padding: 0.7rem 2rem;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-success:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      border: none;
+      padding: 0.7rem 2rem;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-info {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      border: none;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-info:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(23, 162, 184, 0.3);
+    }
+    
+    .btn-warning {
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+      border: none;
+      color: #212529;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-warning:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+      border: none;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(108, 117, 125, 0.3);
+    }
+
+    /* Statistics Cards */
+    .stat-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      border-left: 4px solid #dc3545;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #dc3545;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      color: #6c757d;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.9rem;
+    }
+
+    /* Copyright section */
+    .copyright {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      color: white;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    
+    .copyright a {
+      color: #ffc107;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .copyright a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Other type and affectation input styling */
+    .other-type-container, .other-affectation-container {
+      margin-top: 0.5rem;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .other-type-container.show, .other-affectation-container.show {
+      opacity: 1;
+      max-height: 100px;
+    }
+
+    /* Login Section */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .login-card {
+      background: white;
+      border-radius: 15px;
+      padding: 3rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .login-logo {
+      max-height: 80px;
+      margin-bottom: 2rem;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .signature-block {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .nav-menu .nav-link {
+        padding: 0.75rem 1rem;
+        margin: 0 0.25rem;
+        font-size: 0.8rem;
+      }
+      
+      .main-container {
+        padding: 1rem;
+      }
+    }
+
+    /* Form saved state indicator */
+    .form-saved {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      border-left: 4px solid #28a745;
+    }
+
+    .saved-indicator {
+      color: #155724;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: rgba(40, 167, 69, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login Section -->
+<div id="loginSection" class="login-container">
+  <div class="login-card">
+    <img src="https://images.seeklogo.com/logo-png/53/1/amendis-veolia-logo-png_seeklogo-534032.png" alt="Logo Amendis" class="login-logo">
+    <h3 class="mb-4">Accès Sécurisé</h3>
+    
+    <div id="loginError" class="alert alert-danger" style="display: none;"></div>
+    
+    <form id="loginForm">
+      <div class="mb-3">
+        <input type="text" class="form-control form-control-lg" id="loginUsername" placeholder="Nom d'utilisateur" required>
+      </div>
+      <div class="mb-3">
+        <input type="password" class="form-control form-control-lg" id="loginPassword" placeholder="Mot de passe" required>
+      </div>
+      <button type="submit" class="btn btn-danger btn-lg w-100">
+        <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteConfirmModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="deleteConfirmModalBody">
+        <!-- Delete confirmation content will be populated here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Annuler
+        </button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="fas fa-trash me-1"></i>Confirmer la suppression
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Password Edit Modal -->
+<div class="modal fade" id="editPasswordModal" tabindex="-1" aria-labelledby="editPasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="editPasswordModalLabel">
+          <i class="fas fa-edit me-2"></i>Modifier le mot de passe
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="currentUsername" class="form-label">Nom d'utilisateur</label>
+          <input type="text" class="form-control" id="currentUsername" readonly>
+        </div>
+        <div class="mb-3">
+          <label for="newPasswordInput" class="form-label">Nouveau mot de passe</label>
+          <input type="password" class="form-control" id="newPasswordInput" placeholder="Entrez le nouveau mot de passe" required>
+        </div>
+        <div class="mb-3">
+          <label for="confirmPasswordInput" class="form-label">Confirmer le mot de passe</label>
+          <input type="password" class="form-control" id="confirmPasswordInput" placeholder="Confirmez le nouveau mot de passe" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Annuler
+        </button>
+        <button type="button" class="btn btn-warning" id="savePasswordBtn">
+          <i class="fas fa-save me-1"></i>Modifier le mot de passe
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailsModalLabel">
+          <i class="fas fa-info-circle me-2"></i>Détails de la Remise
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body details-modal-content" id="detailsModalBody">
+        <!-- Details will be populated here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Application -->
+<div id="mainApp" style="display: none;">
+  <header>
+    <img src="https://images.seeklogo.com/logo-png/53/1/amendis-veolia-logo-png_seeklogo-534032.png" alt="Logo Amendis" loading="lazy">
+    <div class="header-title">
+      <h2>Système de Gestion de Remise de Matériel</h2>
+      <p>Direction des Systèmes d'Information (DSI) - Amendis</p>
+    </div>
+    <div>
+      <span id="userWelcome" class="me-3"></span>
+      <button class="btn btn-outline-light btn-sm" id="logoutBtn">
+        <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Menu -->
+  <nav class="nav-menu">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+          <i class="fas fa-tachometer-alt"></i>Dashboard
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+          <i class="fas fa-book"></i>Journal des Remises
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+          <i class="fas fa-chart-pie"></i>Analyse des Données
+        </button>
+      </li>
+      <li class="nav-item" role="presentation" id="admin-tab-container">
+        <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+          <i class="fas fa-users-cog"></i>Configuration Admin
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="main-container">
+    <div class="tab-content">
+      
+      <!-- Dashboard Section -->
+      <div class="tab-pane fade show active content-section" id="dashboard" role="tabpanel">
+        <div class="content">
+          <!-- Saved Indicator (hidden by default) -->
+          <div id="savedIndicator" class="saved-indicator" style="display: none;">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>Formulaire enregistré avec succès !</span>
+            <span id="savedDetails"></span>
+          </div>
+
+          <form id="remiseForm">
+            <!-- Informations Utilisateur -->
+            <div class="form-section" id="userInfoSection">
+              <h5><i class="fas fa-user me-2"></i>Informations Utilisateur</h5>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="prenom" id="inputPrenom" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Nom <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="nom" id="inputNom" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Numéro de téléphone <span class="text-danger">*</span></label>
+                  <input type="tel" class="form-control" name="telephone" id="inputTelephone" required placeholder="0612345678">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Fonction <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="fonction" id="inputFonction" required placeholder="ex: responsable administratif">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Direction/Service <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="direction" id="inputDirection" placeholder="ex: DSI" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Affectation <span class="text-danger">*</span></label>
+                  <select class="form-select" name="affectation" id="inputAffectation" required>
+                    <option value="">Sélectionnez</option>
+                    <option>Tanger</option>
+                    <option>Tétouan</option>
+                    <option>Autre</option>
+                  </select>
+                  <div class="other-affectation-container" id="otherAffectationContainer">
+                    <label class="form-label mt-2">Précisez l'affectation</label>
+                    <input type="text" class="form-control" name="autre_affectation" id="inputAutreAffectation" placeholder="Précisez votre affectation">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informations Matériel -->
+            <div class="form-section" id="materialInfoSection">
+              <h5><i class="fas fa-laptop me-2"></i>Informations Matériel</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Type d'équipement <span class="text-danger">*</span></label>
+                  <select class="form-select" name="type" id="inputType" required>
+                    <option value="">Sélectionnez</option>
+                    <option>PC Portable</option>
+                    <option>PC Bureau</option>
+                    <option>Téléphone</option>
+                    <option>Tablette</option>
+                    <option>Carte SIM</option>
+                    <option>Switch</option>
+                    <option>Routeur</option>
+                    <option>Autre</option>
+                  </select>
+                  <div class="other-type-container" id="otherTypeContainer">
+                    <label class="form-label mt-2">Précisez le type <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="autre_type" id="inputAutreType" placeholder="Précisez le type d'équipement">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">État du matériel <span class="text-danger">*</span></label>
+                  <select class="form-select" name="etat" id="inputEtat" required>
+                    <option value="">Sélectionnez</option>
+                    <option>Neuf</option>
+                    <option>Bon</option>
+                    <option>Usagé</option>
+                    <option>Reconditionné</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Nom du matériel <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="nom_materiel" id="inputMateriel" required placeholder="Lenovo ThinkPad">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Numéro de série <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="numero_serie" id="inputSerie" required placeholder="SN 1AB2C3B4">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Catégorie <span class="text-danger">*</span></label>
+                  <select class="form-select" name="categorie" id="inputCategorie" required>
+                    <option value="">Sélectionnez</option>
+                    <option>IT</option>
+                    <option>OT</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Date de remise <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" name="date_remise" id="inputDate" required>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">Accessoires fournis</label>
+                  <textarea class="form-control" name="accessoires" id="inputAccessoires" rows="2" maxlength="200" placeholder="Listez les accessoires fournis avec le matériel (chargeur, câbles, souris, etc.) - Maximum 2 lignes"></textarea>
+                  <div class="form-text">
+                    <span id="accessoiresCount">0</span>/200 caractères
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informations Administratif -->
+            <div class="form-section" id="adminInfoSection">
+              <h5><i class="fas fa-clipboard me-2"></i>Informations Administratif</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Numéro de remise</label>
+                  <input type="text" id="numeroRemise" class="form-control text-muted bg-light" readonly>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Nom du responsable DSI <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="responsable_dsi" id="inputResponsableDSI" required>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">Projet ou objectif</label>
+                  <textarea class="form-control" name="projet" id="inputProjet" rows="2" maxlength="200" placeholder="Décrivez brièvement le projet ou l'objectif d'utilisation du matériel - Maximum 2 lignes"></textarea>
+                  <div class="form-text">
+                    <span id="projetCount">0</span>/200 caractères
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="agreement-section" id="agreementSection">
+              <h4>Bon de Remise - Récapitulatif</h4>
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Réf :</strong> <span id="refRemise"></span></p>
+                  <p><strong>Nom :</strong> <span id="nomRemise"></span></p>
+                  <p><strong>Fonction :</strong> <span id="fonctionRemise"></span></p>
+                  <p><strong>Direction/Service :</strong> <span id="dirRemise"></span></p>
+                  <p><strong>Affectation :</strong> <span id="affectRemise"></span></p>
+                  <p><strong>Type :</strong> <span id="typeRemise"></span></p>
+                  <p><strong>État :</strong> <span id="etatRemise"></span></p>
+                </div>
+                <div class="col-md-6">
+                  <p><strong>Nom du matériel :</strong> <span id="matRemise"></span></p>
+                  <p><strong>Numéro de série :</strong> <span id="serieRemise"></span></p>
+                  <p><strong>Catégorie :</strong> <span id="catRemise"></span></p>
+                  <p><strong>Date de remise :</strong> <span id="dateRemise"></span></p>
+                  <p><strong>Projet :</strong> <span id="projetRemise"></span></p>
+                  <p><strong>Responsable DSI :</strong> <span id="responsableRemise"></span></p>
+                </div>
+              </div>
+              <p><strong>Accessoires fournis :</strong> <span id="accessoiresRemise"></span></p>
+              
+              <p class="text-center mt-3">Je reconnais avoir reçu le matériel mentionné ci-dessus et m'engage à respecter les conditions d'utilisation.</p>
+              
+              <div class="signature-block">
+                <div>
+                  <p><strong>Signature de l'utilisateur</strong></p>
+                  <p id="signUser"></p>
+                  <hr>
+                  <small>Date: <span id="dateSignature"></span></small>
+                </div>
+                <div>
+                  <p><strong>Signature du Responsable DSI</strong></p>
+                  <p id="signResponsable"></p>
+                  <hr>
+                  <small>Date: <span id="dateSignatureResp"></span></small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Warning Message -->
+            <div class="alert alert-warning d-flex align-items-center mb-4" id="formWarning">
+              <i class="fas fa-exclamation-triangle me-3 fs-5"></i>
+              <div>
+                <strong>Important :</strong> Veuillez remplir tous les champs obligatoires (marqués par *) avant de pouvoir enregistrer ou imprimer le bon de remise.
+                <br><small class="text-muted mt-1">
+                  <i class="fas fa-chart-line me-1"></i>
+                  <span id="submissionCount">0</span> bon(s) de remise soumis jusqu'à présent
+                </small>
+              </div>
+            </div>
+
+            <div class="text-center mt-4">
+              <button type="button" class="btn btn-success me-2" id="saveBtn" disabled>
+                <i class="fas fa-save me-2"></i>Enregistrer
+              </button>
+              <button type="button" class="btn btn-info" id="newFormBtn">
+                <i class="fas fa-plus me-2"></i>Nouvelle Remise
+              </button>
+            </div>
+
+            <!-- PDF Generation Suggestion (hidden by default) -->
+            <div id="pdfSuggestion" class="alert alert-info mt-3" style="display: none;">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-file-pdf fa-2x me-3 text-primary"></i>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1"><i class="fas fa-check-circle text-success me-2"></i>Données enregistrées avec succès !</h6>
+                  <p class="mb-2">Voulez-vous générer le PDF de cette remise maintenant ?</p>
+                  <button type="button" class="btn btn-danger btn-sm me-2" id="generatePdfBtn">
+                    <i class="fas fa-file-pdf me-1"></i>Générer PDF
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="skipPdfBtn">
+                    <i class="fas fa-times me-1"></i>Plus tard
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message Area -->
+            <div id="messageArea" class="mt-3" style="display: none;">
+              <!-- Messages will be displayed here -->
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Analytics Section -->
+      <div class="tab-pane fade content-section" id="analytics" role="tabpanel">
+        <div class="content">
+          <h3 class="mb-4"><i class="fas fa-chart-pie me-2"></i>Analyse des Données</h3>
+          
+          <!-- Statistics Cards -->
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number" id="totalEquipments">0</div>
+                <div class="stat-label">Total Équipements</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number" id="totalIT">0</div>
+                <div class="stat-label">Équipements IT</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number" id="totalOT">0</div>
+                <div class="stat-label">Équipements OT</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number" id="thisMonth">0</div>
+                <div class="stat-label">Ce Mois</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="row">
+            <div class="col-md-3">
+              <div class="analytics-card">
+                <h5><i class="fas fa-chart-pie"></i>Répartition IT/OT</h5>
+                <div class="chart-container">
+                  <canvas id="categoryChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="analytics-card">
+                <h5><i class="fas fa-chart-bar"></i>Types d'Équipements</h5>
+                <div class="chart-container">
+                  <canvas id="equipmentChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="analytics-card">
+                <h5><i class="fas fa-map-marker-alt"></i>Répartition par Affectation</h5>
+                <div class="chart-container">
+                  <canvas id="locationChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="analytics-card">
+                <h5><i class="fas fa-cogs"></i>État du Matériel</h5>
+                <div class="chart-container">
+                  <canvas id="statusChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trends Chart -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="analytics-card">
+                <h5><i class="fas fa-chart-line"></i>Évolution Mensuelle</h5>
+                <div class="chart-container">
+                  <canvas id="trendsChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Section -->
+      <div class="tab-pane fade content-section" id="admin" role="tabpanel">
+        <div class="content">
+          <h3 class="mb-4"><i class="fas fa-users-cog me-2"></i>Configuration Administrateur</h3>
+          
+          <!-- Add User Section -->
+          <div class="admin-card">
+            <h5><i class="fas fa-user-plus me-2"></i>Ajouter un Utilisateur</h5>
+            <div id="addUserForm">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <input type="text" class="form-control" id="newUsername" placeholder="Nom d'utilisateur" required>
+                </div>
+                <div class="col-md-4">
+                  <input type="password" class="form-control" id="newPassword" placeholder="Mot de passe" required>
+                </div>
+                <div class="col-md-2">
+                  <select class="form-select" id="newRole" required>
+                    <option value="">Rôle</option>
+                    <option value="admin">Administrateur</option>
+                    <option value="user">Utilisateur</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-success w-100" id="addUserBtn" onclick="testAddUser()">
+                    <i class="fas fa-plus"></i> Ajouter
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Users List -->
+          <div class="admin-card">
+            <h5><i class="fas fa-users me-2"></i>Utilisateurs Existants</h5>
+            <div id="usersList">
+              <!-- Users will be populated here -->
+            </div>
+          </div>
+
+          <!-- Helpful Tips -->
+          <div class="alert alert-success">
+            <h6><i class="fas fa-lightbulb me-2"></i>Conseils d'utilisation :</h6>
+            <ul class="mb-0">
+              <li>Utilisez <strong>"Ajouter un Utilisateur"</strong> pour créer de nouveaux comptes</li>
+              <li>Cliquez sur <strong>"Modifier"</strong> pour changer le mot de passe d'un utilisateur</li>
+              <li>Les administrateurs peuvent gérer tous les aspects du système</li>
+              <li>Les utilisateurs standard peuvent uniquement créer des bons de remise</li>
+              <li>Sauvegardez régulièrement vos données importantes</li>
+            </ul>
+          </div>
+          
+         
+        </div>
+      </div>
+
+      <!-- History Section -->
+      <div class="tab-pane fade content-section" id="history" role="tabpanel">
+        <div class="content">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h3><i class="fas fa-book me-2"></i>Journal des Remises</h3>
+              <p class="text-muted mb-0">
+                <i class="fas fa-chart-bar me-1"></i>
+                <strong id="totalFormsCount">0</strong> remise(s) enregistrée(s) au total
+              </p>
+            </div>
+            <div class="d-flex gap-2">
+              <input type="text" class="form-control" id="searchHistory" placeholder="Rechercher..." style="width: 250px;">
+              <button class="btn btn-secondary" id="refreshHistory">
+                <i class="fas fa-sync-alt"></i> Actualiser
+              </button>
+            </div>
+          </div>
+          
+          <!-- Message Area for Journal -->
+          <div id="journalMessageArea" class="mt-3" style="display: none;">
+            <!-- Messages will be displayed here -->
+          </div>
+          
+          <div id="historyList">
+            <!-- History items will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="copyright">
+    <p>© 2025 Développé par <a href="https://www.linkedin.com/in/redouan-saidi-15058/" target="_blank">Redouan SAIDI</a> - Amendis Veolia Group</p>
+    <p>Tous droits réservés • Direction des Systèmes d'Information</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script>
+  // Global variables - API-based data management
+  let users = [];
+  let savedRemises = [];
+  let currentUser = null;
+  let formSaved = false;
+
+  // Initialize counter if not exists
+  if (!window.remiseCounter) {
+    window.remiseCounter = 0;
+  }
+
+  // Load data from API
+  async function loadDataFromAPI() {
+    try {
+      // Check session
+      const sessionResponse = await apiClient.getSession();
+      if (sessionResponse.success) {
+        currentUser = sessionResponse.user;
+      }
+
+      // Load remises
+      const remisesResponse = await apiClient.getRemises();
+      if (remisesResponse.success) {
+        savedRemises = remisesResponse.remises;
+        window.remiseCounter = savedRemises.length;
+      }
+
+      // Load users (admin only)
+      if (currentUser && currentUser.role === 'admin') {
+        const usersResponse = await apiClient.getUsers();
+        if (usersResponse.success) {
+          users = usersResponse.users.map(user => ({
+            ...user,
+            name: user.username.charAt(0).toUpperCase() + user.username.slice(1)
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading data from API:', error);
+    }
+  }
+
+  // Global function to update users list - MOVED TO GLOBAL SCOPE
+  function updateUsersList() {
+    const usersList = document.getElementById('usersList');
+    if (!usersList) return;
+    
+    usersList.innerHTML = '';
+
+    users.forEach((user, index) => {
+      const userItem = document.createElement('div');
+      userItem.className = 'user-item';
+      userItem.innerHTML = `
+        <div>
+          <strong>${user.username}</strong> - ${user.name}
+          <br><small class="text-muted">Rôle: ${user.role}</small>
+        </div>
+        <div>
+          <button class="btn btn-warning btn-sm me-2" onclick="simpleEditUser(${index})">
+            <i class="fas fa-edit"></i> Modifier
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="simpleDeleteUser(${index})">
+            <i class="fas fa-trash"></i> Supprimer
+          </button>
+        </div>
+      `;
+      usersList.appendChild(userItem);
+    });
+  }
+
+  // Global functions for admin user management - MOVED TO GLOBAL SCOPE
+  window.testAddUser = async function() {
+    console.log('testAddUser called directly!');
+    console.log('Users array:', users); // Debug log
+    
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value.trim();
+    const role = document.getElementById('newRole').value;
+
+    console.log('Values:', username, password, role);
+
+    // Simple validation
+    if (!username) {
+      alert('Entrez un nom d\'utilisateur');
+      return;
+    }
+    if (!password) {
+      alert('Entrez un mot de passe');
+      return;
+    }
+    if (!role) {
+      alert('Sélectionnez un rôle');
+      return;
+    }
+
+    try {
+      const response = await apiClient.addUser({ username, password, role });
+      
+      if (response.success) {
+        console.log('User added successfully!');
+
+        // Clear form
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('newRole').value = '';
+
+        // Reload users and update list
+        await loadDataFromAPI();
+        updateUsersList();
+        
+        alert('Utilisateur ajouté avec succès!');
+      }
+    } catch (error) {
+      console.error('Error adding user:', error);
+      alert(`Erreur lors de l'ajout: ${error.message}`);
+    }
+  };
+
+  // Simple global function for edit user with prompt
+  window.simpleEditUser = async function(index) {
+    console.log('Edit user called for index:', index);
+    console.log('Users array:', users); // Debug log
+    
+    if (index < 0 || index >= users.length) {
+      alert('Utilisateur introuvable!');
+      return;
+    }
+    
+    const user = users[index];
+    const newPassword = prompt(`Nouveau mot de passe pour ${user.username}:`, '');
+    if (newPassword !== null && newPassword.trim() !== '') {
+      try {
+        const response = await apiClient.updateUser(user.id, { password: newPassword.trim() });
+        
+        if (response.success) {
+          // Reload users and update list
+          await loadDataFromAPI();
+          updateUsersList();
+          alert('Mot de passe modifié!');
+        }
+      } catch (error) {
+        console.error('Error updating user:', error);
+        alert(`Erreur lors de la modification: ${error.message}`);
+      }
+    }
+  };
+
+  // Simple global function for delete user
+  window.simpleDeleteUser = async function(index) {
+    console.log('Delete user called for index:', index);
+    console.log('Users array:', users); // Debug log
+    
+    if (index < 0 || index >= users.length) {
+      alert('Utilisateur introuvable!');
+      return;
+    }
+    
+    const user = users[index];
+    if (confirm(`Supprimer l'utilisateur ${user.username}?`)) {
+      try {
+        const response = await apiClient.deleteUser(user.id);
+        
+        if (response.success) {
+          // Reload users and update list
+          await loadDataFromAPI();
+          updateUsersList();
+          alert('Utilisateur supprimé!');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert(`Erreur lors de la suppression: ${error.message}`);
+      }
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Default users database - only admin (MOVED TO GLOBAL)
+    // Saved data storage (MOVED TO GLOBAL)
+    // let currentUser = null; (MOVED TO GLOBAL)
+    // let formSaved = false; (MOVED TO GLOBAL)
+    
+    // Initialize counter if not exists
+    if (!window.remiseCounter) {
+      window.remiseCounter = savedRemises.length;
+    }
+
+    // Login functionality
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      console.log('Login form submitted');
+      
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      
+      console.log('Login attempt with username:', username);
+      
+      try {
+        const response = await apiClient.login(username, password);
+        console.log('Login API response:', response);
+        
+        if (response.success) {
+          console.log('Login successful, setting up UI');
+          currentUser = response.user;
+          
+          // Hide login section and show main app
+          const loginSection = document.getElementById('loginSection');
+          const mainApp = document.getElementById('mainApp');
+          
+          console.log('Login section element:', loginSection);
+          console.log('Main app element:', mainApp);
+          
+          if (loginSection) loginSection.style.display = 'none';
+          if (mainApp) mainApp.style.display = 'block';
+          
+          const welcomeElement = document.getElementById('userWelcome');
+          if (welcomeElement) {
+            welcomeElement.textContent = `Bienvenue, ${response.user.username}`;
+          }
+          
+          // Show/hide admin tab based on user role
+          const adminTabContainer = document.getElementById('admin-tab-container');
+          if (adminTabContainer) {
+            if (response.user.role !== 'admin') {
+              adminTabContainer.style.display = 'none';
+            } else {
+              adminTabContainer.style.display = 'block';
+            }
+          }
+          
+          // Clear any error messages
+          const loginError = document.getElementById('loginError');
+          if (loginError) loginError.style.display = 'none';
+          
+          // Load data and initialize app
+          console.log('Loading data from API...');
+          await loadDataFromAPI();
+          console.log('Initializing app...');
+          initializeApp();
+          console.log('App initialization complete');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        const loginError = document.getElementById('loginError');
+        if (loginError) {
+          loginError.style.display = 'block';
+          loginError.textContent = error.message || 'Erreur de connexion';
+        }
+      }
+    });
+
+    // Logout functionality
+    document.getElementById('logoutBtn').addEventListener('click', async function() {
+      try {
+        await apiClient.logout();
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+      
+      currentUser = null;
+      formSaved = false;
+      document.getElementById('loginSection').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('loginForm').reset();
+      document.getElementById('loginError').style.display = 'none';
+    });
+
+    function initializeApp() {
+      const { jsPDF } = window.jspdf;
+      
+      // Generate unique document number using API
+      async function generateDocumentNumber() {
+        try {
+          const response = await apiClient.getNextRemiseNumber();
+          if (response.success) {
+            return response.ref;
+          } else {
+            // Fallback to local generation if API fails
+            const year = new Date().getFullYear();
+            window.remiseCounter = window.remiseCounter + 1;
+            const formattedCounter = String(window.remiseCounter).padStart(5, '0');
+            return `REM-${year}-${formattedCounter}`;
+          }
+        } catch (error) {
+          console.error('Error generating document number:', error);
+          // Fallback to local generation
+          const year = new Date().getFullYear();
+          window.remiseCounter = window.remiseCounter + 1;
+          const formattedCounter = String(window.remiseCounter).padStart(5, '0');
+          return `REM-${year}-${formattedCounter}`;
+        }
+      }
+      
+      // Initialize document number with API call
+      generateDocumentNumber().then(numero => {
+        document.getElementById("numeroRemise").value = numero;
+        document.getElementById("refRemise").textContent = numero;
+      });
+      
+      // Set current date
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("inputDate").value = today;
+      
+      // Message display functions
+      function showMessage(message, type = 'info', duration = 5000) {
+        const messageArea = document.getElementById('messageArea');
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 'alert-info';
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                    type === 'error' ? 'fa-exclamation-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        
+        messageArea.innerHTML = `
+          <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${icon} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+        messageArea.style.display = 'block';
+        
+        // Auto-hide after duration
+        if (duration > 0) {
+          setTimeout(() => {
+            const alert = messageArea.querySelector('.alert');
+            if (alert) {
+              alert.classList.remove('show');
+              setTimeout(() => {
+                messageArea.style.display = 'none';
+              }, 150);
+            }
+          }, duration);
+        }
+      }
+
+      // Message display functions for Journal
+      function showJournalMessage(message, type = 'info', duration = 5000) {
+        const messageArea = document.getElementById('journalMessageArea');
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 'alert-info';
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                    type === 'error' ? 'fa-exclamation-circle' : 
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        
+        messageArea.innerHTML = `
+          <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${icon} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+        messageArea.style.display = 'block';
+        
+        // Auto-hide after duration
+        if (duration > 0) {
+          setTimeout(() => {
+            const alert = messageArea.querySelector('.alert');
+            if (alert) {
+              alert.classList.remove('show');
+              setTimeout(() => {
+                messageArea.style.display = 'none';
+              }, 150);
+            }
+          }, duration);
+        }
+      }
+
+      function clearJournalMessages() {
+        const messageArea = document.getElementById('journalMessageArea');
+        messageArea.style.display = 'none';
+        messageArea.innerHTML = '';
+      }
+
+      function clearMessages() {
+        const messageArea = document.getElementById('messageArea');
+        messageArea.style.display = 'none';
+        messageArea.innerHTML = '';
+      }
+
+      // Show saved indicator and PDF suggestion
+      function showSavedIndicator(remiseId, userName) {
+        const indicator = document.getElementById('savedIndicator');
+        const details = document.getElementById('savedDetails');
+        
+        details.textContent = `- Référence: ${remiseId} - Utilisateur: ${userName}`;
+        indicator.style.display = 'block';
+        
+        // Show PDF generation suggestion
+        const pdfSuggestion = document.getElementById('pdfSuggestion');
+        pdfSuggestion.style.display = 'block';
+        
+        // Add visual feedback to form sections
+        document.querySelectorAll('.form-section').forEach(section => {
+          section.classList.add('form-saved');
+        });
+      }
+
+      // Hide saved indicator and PDF suggestion
+      function hideSavedIndicator() {
+        document.getElementById('savedIndicator').style.display = 'none';
+        document.getElementById('pdfSuggestion').style.display = 'none';
+        document.querySelectorAll('.form-section').forEach(section => {
+          section.classList.remove('form-saved');
+        });
+      }
+
+      // Reset form function - FIXED
+      function resetForm() {
+        // Reset form saved state
+        formSaved = false;
+        hideSavedIndicator();
+        
+        // Reset the form to initial state
+        document.getElementById('remiseForm').reset();
+        
+        // Hide and reset other type container
+        const otherContainer = document.getElementById("otherTypeContainer");
+        const otherInput = document.getElementById("inputAutreType");
+        otherContainer.classList.remove("show");
+        otherInput.required = false;
+        otherInput.value = "";
+        
+        // Hide and reset other affectation container
+        const otherAffectationContainer = document.getElementById("otherAffectationContainer");
+        const otherAffectationInput = document.getElementById("inputAutreAffectation");
+        otherAffectationContainer.classList.remove("show");
+        otherAffectationInput.required = false;
+        otherAffectationInput.value = "";
+        
+        // Generate new document number using API
+        generateDocumentNumber().then(numero => {
+          document.getElementById("numeroRemise").value = numero;
+          document.getElementById("refRemise").textContent = numero;
+        }).catch(error => {
+          console.error('Error generating new document number:', error);
+          // Fallback to local generation
+          const year = new Date().getFullYear();
+          window.remiseCounter = window.remiseCounter + 1;
+          const formattedCounter = String(window.remiseCounter).padStart(5, '0');
+          const fallbackNumber = `REM-${year}-${formattedCounter}`;
+          document.getElementById("numeroRemise").value = fallbackNumber;
+          document.getElementById("refRemise").textContent = fallbackNumber;
+        });
+        
+        // Set current date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("inputDate").value = today;
+        
+        // Set signature dates
+        const currentDate = new Date().toLocaleDateString('fr-FR');
+        document.getElementById("dateSignature").textContent = currentDate;
+        document.getElementById("dateSignatureResp").textContent = currentDate;
+        
+        // Clear all validation styling
+        document.querySelectorAll('#remiseForm .is-invalid').forEach(field => {
+          field.classList.remove('is-invalid');
+        });
+        
+        // Reset interaction tracking for all fields
+        document.querySelectorAll('#remiseForm input, #remiseForm select, #remiseForm textarea').forEach(field => {
+          field.dataset.hasInteracted = 'false';
+          // Remove any validation classes that might be present
+          field.classList.remove('is-invalid');
+        });
+        
+        // Reset all live preview fields to initial empty state
+        document.getElementById("nomRemise").textContent = "";
+        document.getElementById("signUser").textContent = "";
+        document.getElementById("fonctionRemise").textContent = "";
+        document.getElementById("dirRemise").textContent = "";
+        document.getElementById("affectRemise").textContent = "";
+        document.getElementById("typeRemise").textContent = "";
+        document.getElementById("etatRemise").textContent = "";
+        document.getElementById("matRemise").textContent = "";
+        document.getElementById("serieRemise").textContent = "";
+        document.getElementById("catRemise").textContent = "";
+        document.getElementById("dateRemise").textContent = "";
+        document.getElementById("projetRemise").textContent = "";
+        document.getElementById("accessoiresRemise").textContent = "";
+        document.getElementById("responsableRemise").textContent = "";
+        document.getElementById("signResponsable").textContent = "";
+        
+        // Reset character counters
+        document.getElementById("accessoiresCount").textContent = "0";
+        document.getElementById("projetCount").textContent = "0";
+        
+        // Disable buttons (same as initial state)
+        document.getElementById("saveBtn").disabled = true;
+        
+        // Clear any messages
+        clearMessages();
+        
+        // Show success message
+        showMessage('✨ <strong>Nouveau formulaire vide créé !</strong><br>Référence: <strong>' + newNumber + '</strong><br>Prêt pour une nouvelle saisie.', 'success');
+      }
+
+      // Set signature dates
+      const currentDate = new Date().toLocaleDateString('fr-FR');
+      document.getElementById("dateSignature").textContent = currentDate;
+      document.getElementById("dateSignatureResp").textContent = currentDate;
+
+      // Phone number validation - only numbers
+      document.getElementById("inputTelephone").addEventListener("input", function(e) {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length > 10) {
+          this.value = this.value.substring(0, 10);
+        }
+        updateLiveFields();
+      });
+
+      // Validate phone number format
+      function isValidPhoneNumber(phone) {
+        const phoneRegex = /^0[5-7][0-9]{8}$/;
+        return phoneRegex.test(phone);
+      }
+
+      // Handle "Autre" type selection
+      document.getElementById("inputType").addEventListener("change", function() {
+        const otherContainer = document.getElementById("otherTypeContainer");
+        const otherInput = document.getElementById("inputAutreType");
+        
+        if (this.value === "Autre") {
+          otherContainer.classList.add("show");
+          otherInput.required = true;
+        } else {
+          otherContainer.classList.remove("show");
+          otherInput.required = false;
+          otherInput.value = "";
+        }
+        updateLiveFields();
+      });
+
+      // Character count for textareas
+      document.getElementById("inputAccessoires").addEventListener("input", function() {
+        const count = this.value.length;
+        document.getElementById("accessoiresCount").textContent = count;
+        if (count > 200) {
+          this.value = this.value.substring(0, 200);
+          document.getElementById("accessoiresCount").textContent = 200;
+        }
+        updateLiveFields();
+      });
+
+      document.getElementById("inputProjet").addEventListener("input", function() {
+        const count = this.value.length;
+        document.getElementById("projetCount").textContent = count;
+        if (count > 200) {
+          this.value = this.value.substring(0, 200);
+          document.getElementById("projetCount").textContent = 200;
+        }
+        updateLiveFields();
+      });
+
+      // Handle "Autre" affectation selection
+      document.getElementById("inputAffectation").addEventListener("change", function() {
+        const otherContainer = document.getElementById("otherAffectationContainer");
+        const otherInput = document.getElementById("inputAutreAffectation");
+        
+        if (this.value === "Autre") {
+          otherContainer.classList.add("show");
+          otherInput.required = true;
+        } else {
+          otherContainer.classList.remove("show");
+          otherInput.required = false;
+          otherInput.value = "";
+        }
+        updateLiveFields();
+      });
+
+      // Form validation function - FIXED to not show errors on load
+      function validateForm(showErrors = false) {
+        const requiredFields = document.querySelectorAll('#remiseForm [required]');
+        let isValid = true;
+        
+        if (showErrors) {
+          requiredFields.forEach(field => {
+            field.classList.remove('is-invalid');
+            if (field.value.trim() === '') {
+              isValid = false;
+              field.classList.add('is-invalid');
+            }
+          });
+
+          const phone = document.getElementById("inputTelephone");
+          if (phone.value.trim() !== '' && !isValidPhoneNumber(phone.value)) {
+            isValid = false;
+            phone.classList.add('is-invalid');
+          }
+        } else {
+          // Only show validation errors for fields that have been interacted with
+          requiredFields.forEach(field => {
+            if (field.dataset.hasInteracted === 'true') {
+              field.classList.remove('is-invalid');
+              if (field.value.trim() === '') {
+                field.classList.add('is-invalid');
+              }
+            }
+          });
+
+          const phone = document.getElementById("inputTelephone");
+          if (phone.dataset.hasInteracted === 'true' && phone.value.trim() !== '' && !isValidPhoneNumber(phone.value)) {
+            phone.classList.add('is-invalid');
+          }
+        }
+
+        // Check all required fields are filled
+        const allFieldsFilled = Array.from(requiredFields).every(field => {
+          // Special handling for "Autre" type field
+          if (field.id === 'inputAutreType') {
+            const typeSelect = document.getElementById('inputType');
+            if (typeSelect.value === 'Autre') {
+              return field.value.trim() !== '';
+            } else {
+              return true; // Not required if "Autre" is not selected
+            }
+          }
+          return field.value.trim() !== '';
+        });
+
+        // Phone validation
+        const phone = document.getElementById("inputTelephone");
+        const phoneValid = phone.value.trim() === '' || isValidPhoneNumber(phone.value);
+        
+        // Button enabling logic - FIXED: Only enable save button
+        const buttonsEnabled = allFieldsFilled && phoneValid && !formSaved;
+        
+        document.getElementById("saveBtn").disabled = !buttonsEnabled;
+        
+        return isValid;
+      }
+
+      // Update live fields - FIXED to not trigger validation on initial load
+      function updateLiveFields() {
+        // If form was saved, mark as modified and hide saved indicator
+        if (formSaved) {
+          formSaved = false;
+          hideSavedIndicator();
+        }
+        
+        const prenom = document.getElementById("inputPrenom").value.trim();
+        const nom = document.getElementById("inputNom").value.trim();
+        const fullName = `${prenom} ${nom}`.trim();
+        
+        document.getElementById("nomRemise").textContent = fullName;
+        document.getElementById("signUser").textContent = fullName;
+        
+        document.getElementById("fonctionRemise").textContent = document.getElementById("inputFonction").value;
+        document.getElementById("dirRemise").textContent = document.getElementById("inputDirection").value;
+        
+        const affectationValue = document.getElementById("inputAffectation").value;
+        const otherAffectation = document.getElementById("inputAutreAffectation").value;
+        document.getElementById("affectRemise").textContent = affectationValue === "Autre" ? otherAffectation : affectationValue;
+        
+        const typeValue = document.getElementById("inputType").value;
+        const otherType = document.getElementById("inputAutreType").value;
+        document.getElementById("typeRemise").textContent = typeValue === "Autre" ? otherType : typeValue;
+        
+        document.getElementById("etatRemise").textContent = document.getElementById("inputEtat").value;
+        document.getElementById("matRemise").textContent = document.getElementById("inputMateriel").value;
+        document.getElementById("serieRemise").textContent = document.getElementById("inputSerie").value;
+        document.getElementById("catRemise").textContent = document.getElementById("inputCategorie").value;
+        document.getElementById("dateRemise").textContent = document.getElementById("inputDate").value;
+        document.getElementById("projetRemise").textContent = document.getElementById("inputProjet").value;
+        document.getElementById("accessoiresRemise").textContent = document.getElementById("inputAccessoires").value || "Aucun";
+        
+        const responsable = document.getElementById("inputResponsableDSI").value;
+        document.getElementById("responsableRemise").textContent = responsable;
+        document.getElementById("signResponsable").textContent = responsable;
+        
+        // Only validate if we have interacted fields to avoid validation styling on load
+        const hasInteractedFields = Array.from(document.querySelectorAll('#remiseForm input, #remiseForm select, #remiseForm textarea'))
+          .some(field => field.dataset.hasInteracted === 'true');
+        
+        if (hasInteractedFields) {
+          validateForm();
+        }
+      }
+
+      // Setup event listeners for form validation - FIXED
+      document.querySelectorAll('#remiseForm input, #remiseForm select, #remiseForm textarea').forEach(field => {
+        // Initialize interaction state as false
+        field.dataset.hasInteracted = 'false';
+        
+        // Mark field as interacted and validate on input
+        field.addEventListener('input', function() {
+          this.dataset.hasInteracted = 'true';
+          updateLiveFields();
+          validateForm();
+        });
+        
+        // Mark field as interacted and validate on change
+        field.addEventListener('change', function() {
+          this.dataset.hasInteracted = 'true';
+          updateLiveFields();
+          validateForm();
+        });
+        
+        // Validate on blur (when user leaves field)
+        field.addEventListener('blur', function() {
+          this.dataset.hasInteracted = 'true';
+          validateForm();
+        });
+        
+        // Remove invalid styling on focus
+        field.addEventListener('focus', function() {
+          this.classList.remove('is-invalid');
+        });
+        
+        // Also trigger validation on keyup for real-time feedback
+        field.addEventListener('keyup', function() {
+          if (this.dataset.hasInteracted === 'true') {
+            setTimeout(() => validateForm(), 100);
+          }
+        });
+      });
+
+      // Update submission count display
+      function updateSubmissionCount() {
+        const count = savedRemises.length;
+        const submissionCountElement = document.getElementById('submissionCount');
+        const totalFormsCountElement = document.getElementById('totalFormsCount');
+        
+        if (submissionCountElement) {
+          submissionCountElement.textContent = count;
+        }
+        if (totalFormsCountElement) {
+          totalFormsCountElement.textContent = count;
+        }
+      }
+      
+      // Initial load - FIXED to prevent any validation styling on load
+      setTimeout(() => {
+        // Initialize all fields as not interacted and remove any validation styling
+        document.querySelectorAll('#remiseForm input, #remiseForm select, #remiseForm textarea').forEach(field => {
+          field.dataset.hasInteracted = 'false';
+          field.classList.remove('is-invalid', 'is-valid'); // Remove any validation classes
+        });
+        
+        updateLiveFields();
+        // Don't call validateForm() on initial load to prevent any validation styling
+        updateSubmissionCount();
+        
+        // Load initial data for other sections
+        updateAnalytics();
+        updateUsersList();
+        updateHistory(); // This should make the Journal show up
+        
+        // Setup delete confirmation button
+        setupDeleteConfirmButton();
+      }, 500);
+
+      // Save button - FIXED
+      document.getElementById("saveBtn").addEventListener("click", async function() {
+        if (validateForm(true)) {
+          const formData = {
+            ref: document.getElementById("numeroRemise").value,
+            prenom: document.getElementById("inputPrenom").value,
+            nom: document.getElementById("inputNom").value,
+            telephone: document.getElementById("inputTelephone").value,
+            fonction: document.getElementById("inputFonction").value,
+            direction: document.getElementById("inputDirection").value,
+            affectation: document.getElementById("inputAffectation").value === "Autre" ? 
+                         document.getElementById("inputAutreAffectation").value : 
+                         document.getElementById("inputAffectation").value,
+            type: document.getElementById("inputType").value === "Autre" ? 
+                  document.getElementById("inputAutreType").value : 
+                  document.getElementById("inputType").value,
+            etat: document.getElementById("inputEtat").value,
+            nom_materiel: document.getElementById("inputMateriel").value,
+            numero_serie: document.getElementById("inputSerie").value,
+            categorie: document.getElementById("inputCategorie").value,
+            date_remise: document.getElementById("inputDate").value,
+            accessoires: document.getElementById("inputAccessoires").value,
+            responsable_dsi: document.getElementById("inputResponsableDSI").value,
+            projet: document.getElementById("inputProjet").value
+          };
+          
+          try {
+            const response = await apiClient.addRemise(formData);
+            
+            if (response.success) {
+              // Mark form as saved and show indicator
+              formSaved = true;
+              const fullName = `${formData.prenom} ${formData.nom}`.trim();
+              showSavedIndicator(formData.ref, fullName);
+              
+              // Disable buttons immediately after saving
+              document.getElementById("saveBtn").disabled = true;
+              
+              // Reload data and update displays
+              await loadDataFromAPI();
+              updateAnalytics();
+              updateHistory();
+              updateSubmissionCount();
+              
+              // Show success message
+              showMessage(`<strong>Données enregistrées avec succès !</strong><br>Référence : <strong>${formData.ref}</strong><br>Utilisateur : <strong>${fullName}</strong>`, 'success');
+            }
+          } catch (error) {
+            showMessage(`<strong>Erreur lors de l'enregistrement :</strong><br>${error.message}`, 'error', 0);
+          }
+        } else {
+          showMessage('<strong>Formulaire incomplet !</strong><br>Veuillez remplir tous les champs obligatoires correctement avant d\'enregistrer.', 'warning');
+        }
+      });
+
+      // Helper function to format dates safely
+      function formatDateSafely(dateInput) {
+        if (!dateInput) return 'Non spécifiée';
+        
+        let date;
+        if (typeof dateInput === 'string') {
+          // Handle various date formats
+          if (dateInput.includes('-')) {
+            // ISO format or YYYY-MM-DD
+            date = new Date(dateInput);
+          } else if (dateInput.includes('/')) {
+            // DD/MM/YYYY or MM/DD/YYYY
+            date = new Date(dateInput);
+          } else {
+            return dateInput; // Return as-is if it's already formatted
+          }
+        } else {
+          date = new Date(dateInput);
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          return 'Date invalide';
+        }
+        
+        return date.toLocaleDateString('fr-FR');
+      }
+
+      // PDF generation function with improved layout
+      function generatePDF(formData) {
+        try {
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const margin = 15;
+          const contentWidth = pageWidth - (margin * 2);
+          
+          const primaryColor = [105, 105, 105];
+          const secondaryColor = [220, 53, 69];
+          const lightGray = [245, 245, 245];
+          const darkGray = [64, 64, 64];
+          
+          // Add subtle watermark
+          doc.setTextColor(250, 250, 250);
+          doc.setFontSize(20);
+          doc.setFont('helvetica', 'normal');
+          doc.text("AMENDIS", pageWidth/2, pageHeight/2, { 
+            align: 'center', 
+            angle: 45 
+          });
+          
+          // Compact header
+          doc.setFillColor(...secondaryColor);
+          doc.rect(0, 0, pageWidth, 20, 'F');
+          
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text("AMENDIS - BON DE REMISE DE MATÉRIEL", pageWidth/2, 12, { align: 'center' });
+          
+          let y = 30;
+          
+          // Reference and date in compact header
+          doc.setFillColor(...lightGray);
+          doc.rect(margin, y, contentWidth, 6, 'F');
+          
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Référence: ${formData.ref || formData.numero_remise || formData.id}`, margin + 3, y + 4);
+          doc.text(`Date: ${formatDateSafely(formData.date_creation || formData.date_remise)}`, pageWidth - margin - 3, y + 4, { align: 'right' });
+          
+          y += 12;
+          
+          function addCompactSection(title, yPos) {
+            doc.setFillColor(...primaryColor);
+            doc.rect(margin, yPos, contentWidth, 5, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, margin + 3, yPos + 3.5);
+            return yPos + 8;
+          }
+          
+          function addCompactRow(label, value, yPos) {
+            doc.setTextColor(...darkGray);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${label}:`, margin + 3, yPos);
+            
+            doc.setFont('helvetica', 'normal');
+            const maxValueWidth = contentWidth - 50;
+            const wrappedValue = doc.splitTextToSize(value || 'N/A', maxValueWidth);
+            doc.text(wrappedValue, margin + 45, yPos);
+            
+            return yPos + (wrappedValue.length * 3.5) + 1;
+          }
+          
+          // User Information - Compact
+          y = addCompactSection("INFORMATIONS UTILISATEUR", y);
+          y = addCompactRow("Nom complet", `${formData.prenom} ${formData.nom}`, y);
+          y = addCompactRow("Fonction", formData.fonction, y);
+          y = addCompactRow("Direction/Service", formData.direction, y);
+          y = addCompactRow("Affectation", formData.affectation, y);
+          y = addCompactRow("Téléphone", formData.telephone, y);
+          
+          y += 5;
+          
+          // Equipment Information - Compact
+          y = addCompactSection("DÉTAILS DU MATÉRIEL", y);
+          y = addCompactRow("Type d'équipement", formData.type, y);
+          y = addCompactRow("Nom du matériel", formData.nom_materiel, y);
+          y = addCompactRow("Numéro de série", formData.numero_serie, y);
+          y = addCompactRow("État", formData.etat, y);
+          y = addCompactRow("Catégorie", formData.categorie, y);
+          y = addCompactRow("Date de remise", formData.date_remise, y);
+          
+          y += 5;
+          
+          // Administrative Information - Compact
+          y = addCompactSection("INFORMATIONS ADMINISTRATIVES", y);
+          y = addCompactRow("Responsable DSI", formData.responsable_dsi, y);
+          
+          y += 5;
+          
+          // Accessories - Compact
+          y = addCompactSection("ACCESSOIRES FOURNIS", y);
+          const accessoires = formData.accessoires?.trim() || "Aucun";
+          y = addCompactRow("", accessoires, y);
+          
+          y += 5;
+          
+          // Project - Compact
+          y = addCompactSection("PROJET OU OBJECTIF", y);
+          const projet = formData.projet?.trim() || "Non spécifié";
+          y = addCompactRow("", projet, y);
+          
+          y += 10;
+          
+          // Agreement section - Compact
+          doc.setFillColor(248, 248, 248);
+          doc.rect(margin, y, contentWidth, 8, 'F');
+          
+          doc.setTextColor(...primaryColor);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text("ENGAGEMENT", pageWidth/2, y + 5, { align: 'center' });
+          
+          y += 12;
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(7.5);
+          doc.setFont('helvetica', 'normal');
+          
+          const agreementText = "Je reconnais avoir reçu le matériel mentionné ci-dessus en parfait état et m'engage à respecter les conditions d'utilisation d'Amendis.";
+          const splitAgreement = doc.splitTextToSize(agreementText, contentWidth - 6);
+          doc.text(splitAgreement, margin + 3, y);
+          
+          y += splitAgreement.length * 3 + 8;
+          
+          // Compact signature section
+          const signatureWidth = (contentWidth - 6) / 2;
+          
+          doc.setDrawColor(...primaryColor);
+          doc.setLineWidth(0.2);
+          doc.rect(margin, y, signatureWidth, 18, 'S');
+          
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'bold');
+          doc.text("Signature utilisateur", margin + 2, y + 3);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${formData.prenom} ${formData.nom}`, margin + 2, y + 7);
+          doc.text(`Date: ${formatDateSafely(formData.date_creation || formData.date_remise)}`, margin + 2, y + 11);
+          
+          const rightBoxX = margin + signatureWidth + 3;
+          doc.rect(rightBoxX, y, signatureWidth, 18, 'S');
+          
+          doc.setFont('helvetica', 'bold');
+          doc.text("Signature Responsable DSI", rightBoxX + 2, y + 3);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.text(formData.responsable_dsi, rightBoxX + 2, y + 7);
+          doc.text(`Date: ${formatDateSafely(formData.date_creation || formData.date_remise)}`, rightBoxX + 2, y + 11);
+          
+          // Compact footer
+          const footerY = pageHeight - 8;
+          doc.setDrawColor(...primaryColor);
+          doc.setLineWidth(0.2);
+          doc.line(margin, footerY, pageWidth - margin, footerY);
+          
+          doc.setTextColor(...primaryColor);
+          doc.setFontSize(6);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Amendis - Veolia Group | Document officiel", pageWidth/2, footerY + 3, { align: 'center' });
+          
+          const timestamp = new Date().toISOString().slice(0, 10);
+          const userFullName = `${formData.prenom}_${formData.nom}`.replace(/\s+/g, '_');
+          const filename = `Bon_Remise_${userFullName}_${formData.id}_${timestamp}.pdf`;
+          doc.save(filename);
+          
+          return filename;
+          
+        } catch (error) {
+          console.error("PDF generation error:", error);
+          throw error;
+        }
+      }
+
+      // PDF suggestion event handlers
+      document.getElementById('generatePdfBtn').addEventListener('click', function() {
+        // Get the last saved form data
+        const lastSaved = savedRemises[savedRemises.length - 1];
+        if (lastSaved) {
+          try {
+            const filename = generatePDF(lastSaved);
+            showMessage(`<strong>PDF généré avec succès !</strong><br>Fichier téléchargé : <em>${filename}</em>`, 'success');
+            document.getElementById('pdfSuggestion').style.display = 'none';
+          } catch (error) {
+            showMessage(`<strong>Erreur lors de la génération du PDF :</strong><br>${error.message}`, 'error');
+          }
+        }
+      });
+
+      document.getElementById('skipPdfBtn').addEventListener('click', function() {
+        document.getElementById('pdfSuggestion').style.display = 'none';
+        showMessage('<i class="fas fa-info-circle me-2"></i>Vous pouvez générer le PDF plus tard depuis le Journal des Remises.', 'info', 3000);
+      });
+
+      // New Form Button - FIXED
+      document.getElementById("newFormBtn").addEventListener("click", function() {
+        resetForm();
+      });
+
+      // Remove the old print button event listener and replace with compact PDF generation for history
+      // Print button - Removed (now only accessible via suggestion or history)
+        if (!validateForm(true)) {
+          showMessage('<strong>Formulaire incomplet !</strong><br>Veuillez remplir tous les champs obligatoires avant d\'enregistrer.', 'warning');
+          return;
+        }
+
+      // Analytics Functions
+      function updateAnalytics() {
+        updateStatistics();
+        updateCharts();
+      }
+
+      function updateStatistics() {
+        const totalEquipments = savedRemises.length;
+        const totalIT = savedRemises.filter(r => r.categorie === 'IT').length;
+        const totalOT = savedRemises.filter(r => r.categorie === 'OT').length;
+        
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const thisMonth = savedRemises.filter(r => {
+          // Handle both date_created and date_remise formats
+          const dateStr = r.date_created || r.date_remise;
+          if (!dateStr) return false;
+          
+          const date = new Date(dateStr);
+          return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        }).length;
+        
+        // Update the statistics display
+        document.getElementById('totalEquipments').textContent = totalEquipments;
+        document.getElementById('totalIT').textContent = totalIT;
+        document.getElementById('totalOT').textContent = totalOT;
+        document.getElementById('thisMonth').textContent = thisMonth;
+      }
+
+      function updateCharts() {
+        // Define professional color palette - limited and consistent
+        const chartColors = {
+          primary: '#2563eb',      // Professional Blue
+          secondary: '#10b981',    // Professional Green  
+          tertiary: '#f59e0b',     // Professional Orange
+          quaternary: '#8b5cf6',   // Professional Purple
+          neutral: '#6b7280',      // Professional Gray
+          success: '#059669',      // Success Green
+          warning: '#d97706',      // Warning Orange
+          danger: '#dc2626'        // Danger Red
+        };
+
+        // Clear existing charts before creating new ones
+        const chartIds = ['categoryChart', 'equipmentChart', 'locationChart', 'trendsChart', 'statusChart'];
+        chartIds.forEach(id => {
+          const existingChart = Chart.getChart(id);
+          if (existingChart) {
+            existingChart.destroy();
+          }
+        });
+
+        // IT/OT Distribution - BAR CHART as requested
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const itCount = savedRemises.filter(r => r.categorie === 'IT').length;
+        const otCount = savedRemises.filter(r => r.categorie === 'OT').length;
+
+        new Chart(categoryCtx, {
+          type: 'bar',
+          data: {
+            labels: ['IT', 'OT'],
+            datasets: [{
+              label: 'Nombre d\'équipements',
+              data: [itCount, otCount],
+              backgroundColor: [
+                chartColors.primary,    // IT - Professional Blue
+                chartColors.secondary   // OT - Professional Green
+              ],
+              borderColor: [
+                chartColors.primary,
+                chartColors.secondary
+              ],
+              borderWidth: 2,
+              borderRadius: 8,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                  color: chartColors.neutral
+                },
+                grid: {
+                  color: 'rgba(0,0,0,0.1)'
+                }
+              },
+              x: {
+                ticks: {
+                  color: chartColors.neutral,
+                  font: {
+                    weight: 'bold'
+                  }
+                },
+                grid: {
+                  display: false
+                }
+              }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuart'
+            }
+          }
+        });
+
+        // Equipment Types - PIE CHART as requested
+        const equipmentCtx = document.getElementById('equipmentChart').getContext('2d');
+        const typeCount = {};
+        savedRemises.forEach(r => {
+          typeCount[r.type] = (typeCount[r.type] || 0) + 1;
+        });
+
+        // Use only professional colors for equipment types
+        const equipmentTypes = Object.keys(typeCount);
+        const professionalColors = [
+          chartColors.primary,
+          chartColors.secondary,
+          chartColors.tertiary,
+          chartColors.quaternary,
+          chartColors.neutral,
+          chartColors.success,
+          chartColors.warning,
+          chartColors.danger
+        ];
+
+        new Chart(equipmentCtx, {
+          type: 'pie',
+          data: {
+            labels: equipmentTypes,
+            datasets: [{
+              data: Object.values(typeCount),
+              backgroundColor: equipmentTypes.map((_, index) => 
+                professionalColors[index % professionalColors.length]
+              ),
+              borderColor: '#ffffff',
+              borderWidth: 3,
+              hoverBorderWidth: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 11
+                  },
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1,
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.parsed * 100) / total).toFixed(1);
+                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            animation: {
+              animateRotate: true,
+              animateScale: true,
+              duration: 1000
+            }
+          }
+        });
+
+        // Location Chart - Clean pie chart with limited colors
+        const locationCtx = document.getElementById('locationChart').getContext('2d');
+        const locationCount = {};
+        savedRemises.forEach(r => {
+          locationCount[r.affectation] = (locationCount[r.affectation] || 0) + 1;
+        });
+
+        const locations = Object.keys(locationCount);
+        const locationColors = locations.map((location, index) => {
+          // Use only 3-4 main colors for locations
+          const mainColors = [chartColors.primary, chartColors.secondary, chartColors.tertiary, chartColors.quaternary];
+          return mainColors[index % mainColors.length];
+        });
+
+        new Chart(locationCtx, {
+          type: 'pie',
+          data: {
+            labels: locations,
+            datasets: [{
+              data: Object.values(locationCount),
+              backgroundColor: locationColors,
+              borderColor: '#ffffff',
+              borderWidth: 3,
+              hoverBorderWidth: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 11
+                  },
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1,
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.parsed * 100) / total).toFixed(1);
+                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            animation: {
+              animateRotate: true,
+              animateScale: true,
+              duration: 1000
+            }
+          }
+        });
+
+        // Status Chart - Professional doughnut
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusCount = {};
+        savedRemises.forEach(r => {
+          statusCount[r.etat] = (statusCount[r.etat] || 0) + 1;
+        });
+
+        const statusTypes = Object.keys(statusCount);
+        const statusColors = statusTypes.map((status, index) => {
+          // Map status to appropriate colors
+          if (status === 'Neuf') return chartColors.success;
+          if (status === 'Bon') return chartColors.primary;
+          if (status === 'Usagé') return chartColors.warning;
+          if (status === 'Reconditionné') return chartColors.tertiary;
+          return chartColors.neutral;
+        });
+
+        new Chart(statusCtx, {
+          type: 'doughnut',
+          data: {
+            labels: statusTypes,
+            datasets: [{
+              data: Object.values(statusCount),
+              backgroundColor: statusColors,
+              borderColor: '#ffffff',
+              borderWidth: 3,
+              hoverBorderWidth: 4,
+              cutout: '60%'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 11
+                  },
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1,
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.parsed * 100) / total).toFixed(1);
+                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            animation: {
+              animateRotate: true,
+              animateScale: true,
+              duration: 1000
+            }
+          }
+        });
+        // Trends Chart - Enhanced with better date handling
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        const monthlyData = {};
+        
+        // Initialize last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const monthKey = date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short' });
+          monthlyData[monthKey] = 0;
+        }
+
+        savedRemises.forEach(r => {
+          // Handle both date_created and date_remise formats
+          const dateStr = r.date_created || r.date_remise;
+          if (!dateStr) return;
+          
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) return; // Skip invalid dates
+          
+          const monthKey = date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short' });
+          if (monthlyData.hasOwnProperty(monthKey)) {
+            monthlyData[monthKey]++;
+          }
+        });
+
+        new Chart(trendsCtx, {
+          type: 'line',
+          data: {
+            labels: Object.keys(monthlyData),
+            datasets: [{
+              label: 'Remises par mois',
+              data: Object.values(monthlyData),
+              borderColor: chartColors.primary,
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: chartColors.primary,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderWidth: 1
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                  color: chartColors.neutral
+                },
+                grid: {
+                  color: 'rgba(0,0,0,0.1)'
+                }
+              },
+              x: {
+                ticks: {
+                  color: chartColors.neutral
+                },
+                grid: {
+                  display: false
+                }
+              }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuart'
+            }
+          }
+        });
+      }
+      // Admin Functions - SIMPLIFIED (updateUsersList moved to global)
+      // (updateUsersList function is now global)
+
+      // Add User Form - COMPLETELY FIXED to prevent session disconnect
+      function setupAddUserForm() {
+        const addUserBtn = document.getElementById('addUserBtn');
+        if (!addUserBtn) return;
+        
+        console.log('Setting up add user button'); // Debug log
+        
+        // Remove any existing listeners
+        addUserBtn.removeEventListener('click', handleAddUserClick);
+        
+        // Add click listener to button (not form submission)
+        addUserBtn.addEventListener('click', function(e) {
+          console.log('Add user button clicked directly'); // Debug log
+          
+          // Prevent any default behavior
+          e.preventDefault();
+          e.stopPropagation();
+          
+          handleAddUserClick();
+        });
+      }
+
+      function handleAddUserClick() {
+        console.log('handleAddUserClick called'); // Debug log
+        
+        const username = document.getElementById('newUsername').value.trim();
+        const password = document.getElementById('newPassword').value.trim();
+        const role = document.getElementById('newRole').value;
+
+        console.log('Form values:', { username, password, role }); // Debug log
+
+        // Validation
+        if (!username || !password || !role) {
+          alert('Veuillez remplir tous les champs!');
+          return;
+        }
+
+        if (users.find(u => u.username === username)) {
+          alert('Ce nom d\'utilisateur existe déjà!');
+          return;
+        }
+
+        try {
+          // Add new user
+          users.push({
+            username: username,
+            password: password,
+            role: role,
+            name: username.charAt(0).toUpperCase() + username.slice(1)
+          });
+
+          console.log('User added successfully, total users:', users.length); // Debug log
+
+          // Update display and reset form
+          updateUsersList();
+          
+          // Reset form manually
+          document.getElementById('newUsername').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('newRole').value = '';
+          
+          alert('Utilisateur ajouté avec succès!');
+          
+        } catch (error) {
+          console.error('Error adding user:', error);
+          alert('Erreur lors de l\'ajout de l\'utilisateur.');
+        }
+      }
+
+      // History Functions - FIXED with proper event delegation
+      function updateHistory() {
+        console.log('updateHistory called, savedRemises:', savedRemises.length); // Debug log
+        const historyList = document.getElementById('historyList');
+        
+        if (!historyList) {
+          console.error('historyList element not found!');
+          return;
+        }
+        
+        historyList.innerHTML = '';
+
+        const sortedRemises = [...savedRemises].sort((a, b) => 
+          new Date(b.date_creation) - new Date(a.date_creation)
+        );
+
+        console.log('Sorted remises:', sortedRemises.length); // Debug log
+
+        if (sortedRemises.length === 0) {
+          historyList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3"></i><br>Aucune remise enregistrée</div>';
+          return;
+        }
+
+        sortedRemises.forEach(remise => {
+          const historyCard = document.createElement('div');
+          historyCard.className = 'history-card';
+          
+          // Determine if delete button should be shown (only for admins)
+          const deleteButton = currentUser && currentUser.role === 'admin' ? 
+            `<button class="btn btn-danger btn-sm ms-2 delete-btn" data-remise-id="${remise.id}">
+              <i class="fas fa-trash me-1"></i>Supprimer
+            </button>` : '';
+
+          historyCard.innerHTML = `
+            <div class="history-meta">
+              <span class="history-ref">${remise.ref || remise.numero_remise || remise.id}</span>
+              <span class="history-date">${formatDateSafely(remise.date_creation)}</span>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Utilisateur:</strong> ${remise.prenom} ${remise.nom}</p>
+                <p><strong>Direction/Service:</strong> ${remise.direction}</p>
+                <p><strong>Affectation:</strong> ${remise.affectation}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Équipement:</strong> ${remise.type}</p>
+                <p><strong>Série:</strong> ${remise.numero_serie}</p>
+                <p><strong>Catégorie:</strong> ${remise.categorie}</p>
+              </div>
+            </div>
+            <div class="text-end mt-2">
+              <button class="btn btn-info btn-sm reprint-btn" data-remise-id="${remise.id}">
+                <i class="fas fa-print me-1"></i>Réimprimer
+              </button>
+              <button class="btn btn-warning btn-sm ms-2 details-btn" data-remise-id="${remise.id}">
+                <i class="fas fa-eye me-1"></i>Détails
+              </button>
+              ${deleteButton}
+            </div>
+          `;
+          historyList.appendChild(historyCard);
+        });
+
+        console.log('History updated with', sortedRemises.length, 'items'); // Debug log
+        
+        // Setup event listeners for the new buttons using event delegation
+        setupHistoryEventListeners();
+        
+        // Setup refresh and search after history is updated
+        setupRefreshAndSearch();
+      }
+
+      // Setup event listeners for history buttons using event delegation
+      function setupHistoryEventListeners() {
+        const historyList = document.getElementById('historyList');
+        
+        // Remove any existing event listeners
+        historyList.removeEventListener('click', handleHistoryButtonClick);
+        
+        // Add single event listener with delegation
+        historyList.addEventListener('click', handleHistoryButtonClick);
+      }
+
+      // Handle all history button clicks
+      function handleHistoryButtonClick(event) {
+        const target = event.target.closest('button');
+        if (!target) return;
+
+        const remiseId = target.getAttribute('data-remise-id');
+        console.log('Button clicked:', target.className, 'for remise:', remiseId); // Debug log
+
+        if (target.classList.contains('reprint-btn')) {
+          console.log('Reprint button clicked for:', remiseId);
+          handleReprintPDF(remiseId);
+        } else if (target.classList.contains('details-btn')) {
+          console.log('Details button clicked for:', remiseId);
+          handleViewDetails(remiseId);
+        } else if (target.classList.contains('delete-btn')) {
+          console.log('Delete button clicked for:', remiseId);
+          handleDeleteRemise(remiseId);
+        }
+      }
+
+      // Handle reprint PDF
+      function handleReprintPDF(remiseId) {
+        console.log('handleReprintPDF called with ID:', remiseId);
+        
+        const remise = savedRemises.find(r => r.id == remiseId || r.id === parseInt(remiseId));
+        if (!remise) {
+          showJournalMessage('<strong>Erreur :</strong><br>Remise non trouvée !', 'error');
+          return;
+        }
+
+        try {
+          console.log('Generating PDF for remise:', remise);
+          const filename = generatePDF(remise);
+          showJournalMessage(`<strong>PDF réimprimé avec succès !</strong><br>Fichier téléchargé : <em>${filename}</em>`, 'success');
+        } catch (error) {
+          console.error("PDF reprint error:", error);
+          showJournalMessage(`<strong>Erreur lors de la réimpression du PDF :</strong><br>${error.message}`, 'error');
+        }
+      }
+
+      // Handle view details
+      function handleViewDetails(remiseId) {
+        console.log('handleViewDetails called with ID:', remiseId);
+        
+        const remise = savedRemises.find(r => r.id == remiseId || r.id === parseInt(remiseId));
+        if (!remise) {
+          showJournalMessage('<strong>Erreur :</strong><br>Remise non trouvée !', 'error');
+          return;
+        }
+
+        // Update modal title
+        const modalLabel = document.getElementById('detailsModalLabel');
+        if (modalLabel) {
+          modalLabel.innerHTML = `
+            <i class="fas fa-info-circle me-2"></i>Détails de la Remise ${remise.id}
+          `;
+        }
+
+        // Build detailed content
+        const detailsContent = `
+          <div class="detail-section">
+            <h6><i class="fas fa-user me-2"></i>Informations Utilisateur</h6>
+            <div class="detail-row">
+              <div class="detail-label">Nom complet :</div>
+              <div class="detail-value">${remise.prenom} ${remise.nom}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Téléphone :</div>
+              <div class="detail-value">${remise.telephone}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Fonction :</div>
+              <div class="detail-value">${remise.fonction}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Direction/Service :</div>
+              <div class="detail-value">${remise.direction}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Affectation :</div>
+              <div class="detail-value">${remise.affectation}</div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h6><i class="fas fa-laptop me-2"></i>Informations Matériel</h6>
+            <div class="detail-row">
+              <div class="detail-label">Type d'équipement :</div>
+              <div class="detail-value">${remise.type}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Nom du matériel :</div>
+              <div class="detail-value">${remise.nom_materiel}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Numéro de série :</div>
+              <div class="detail-value">${remise.numero_serie}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">État :</div>
+              <div class="detail-value">${remise.etat}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Catégorie :</div>
+              <div class="detail-value">${remise.categorie}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Date de remise :</div>
+              <div class="detail-value">${remise.date_remise}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Accessoires :</div>
+              <div class="detail-value">${remise.accessoires || 'Aucun'}</div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h6><i class="fas fa-clipboard me-2"></i>Informations Administratives</h6>
+            <div class="detail-row">
+              <div class="detail-label">Numéro de remise :</div>
+              <div class="detail-value"><strong>${remise.id}</strong></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Responsable DSI :</div>
+              <div class="detail-value">${remise.responsable_dsi}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Projet/Objectif :</div>
+              <div class="detail-value">${remise.projet || 'Non spécifié'}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Date de création :</div>
+              <div class="detail-value">${formatDateSafely(remise.date_creation, true)}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Créé par :</div>
+              <div class="detail-value">${remise.created_by}</div>
+            </div>
+          </div>
+        `;
+
+        // Set modal content
+        const modalBody = document.getElementById('detailsModalBody');
+        if (modalBody) {
+          modalBody.innerHTML = detailsContent;
+        }
+
+        // Show modal
+        try {
+          const modalElement = document.getElementById('detailsModal');
+          if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Details modal shown successfully');
+          }
+        } catch (error) {
+          console.error('Error showing details modal:', error);
+          showJournalMessage('<strong>Erreur :</strong><br>Impossible d\'afficher les détails.', 'error');
+        }
+      }
+
+      // Handle delete remise
+      function handleDeleteRemise(remiseId) {
+        console.log('handleDeleteRemise called with ID:', remiseId);
+        
+        if (!currentUser || currentUser.role !== 'admin') {
+          showJournalMessage('<strong>Accès refusé !</strong><br>Seuls les administrateurs peuvent supprimer des remises.', 'error');
+          return;
+        }
+
+        const remise = savedRemises.find(r => r.id == remiseId || r.id === parseInt(remiseId));
+        if (!remise) {
+          showJournalMessage('<strong>Erreur :</strong><br>Remise non trouvée !', 'error');
+          return;
+        }
+
+        // Update modal title and content
+        const modalLabel = document.getElementById('deleteConfirmModalLabel');
+        if (modalLabel) {
+          modalLabel.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression
+          `;
+        }
+
+        // Build confirmation content
+        const confirmationContent = `
+          <div class="alert alert-warning">
+            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Attention !</h6>
+            <p class="mb-0">Vous êtes sur le point de supprimer définitivement cette remise. Cette action est <strong>irréversible</strong>.</p>
+          </div>
+          
+          <div class="card">
+            <div class="card-header bg-light">
+              <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Détails de la remise à supprimer</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6"><strong>Référence :</strong></div>
+                <div class="col-6">${remise.id}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Utilisateur :</strong></div>
+                <div class="col-6">${remise.prenom} ${remise.nom}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Équipement :</strong></div>
+                <div class="col-6">${remise.type}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Modèle :</strong></div>
+                <div class="col-6">${remise.nom_materiel}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Numéro de série :</strong></div>
+                <div class="col-6">${remise.numero_serie}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Date de création :</strong></div>
+                <div class="col-6">${formatDateSafely(remise.date_creation)}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="alert alert-danger mt-3">
+            <strong><i class="fas fa-exclamation-circle me-2"></i>Cette action supprimera définitivement :</strong>
+            <ul class="mb-0 mt-2">
+              <li>Toutes les informations de cette remise</li>
+              <li>L'historique associé</li>
+              <li>Les données ne pourront pas être récupérées</li>
+            </ul>
+          </div>
+        `;
+
+        // Set modal content
+        const modalBody = document.getElementById('deleteConfirmModalBody');
+        if (modalBody) {
+          modalBody.innerHTML = confirmationContent;
+        }
+
+        // Store remise ID for confirmation
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmBtn) {
+          confirmBtn.setAttribute('data-remise-id', remiseId);
+        }
+
+        // Show modal
+        try {
+          const modalElement = document.getElementById('deleteConfirmModal');
+          if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Delete confirmation modal shown successfully');
+          }
+        } catch (error) {
+          console.error('Error showing delete modal:', error);
+          showJournalMessage('<strong>Erreur :</strong><br>Impossible d\'afficher la confirmation.', 'error');
+        }
+      }
+
+      // Refresh History - FIXED with proper element check
+      function setupRefreshAndSearch() {
+        const refreshBtn = document.getElementById('refreshHistory');
+        const searchInput = document.getElementById('searchHistory');
+        
+        if (refreshBtn) {
+          // Remove existing listeners
+          refreshBtn.removeEventListener('click', handleRefreshClick);
+          refreshBtn.addEventListener('click', handleRefreshClick);
+        }
+        
+        if (searchInput) {
+          // Remove existing listeners
+          searchInput.removeEventListener('input', handleSearchInput);
+          searchInput.addEventListener('input', handleSearchInput);
+        }
+      }
+
+      function handleRefreshClick() {
+        console.log('Refresh button clicked');
+        updateHistory();
+        const searchInput = document.getElementById('searchHistory');
+        if (searchInput) {
+          searchInput.value = '';
+        }
+        showJournalMessage('<i class="fas fa-sync-alt me-2"></i>Journal des remises actualisé avec succès.', 'info', 2000);
+      }
+
+      function handleSearchInput(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const historyCards = document.querySelectorAll('.history-card');
+        
+        let visibleCount = 0;
+        historyCards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          const isVisible = text.includes(searchTerm);
+          card.style.display = isVisible ? 'block' : 'none';
+          if (isVisible) visibleCount++;
+        });
+        
+        // Show search results info
+        if (searchTerm.trim() !== '') {
+          showJournalMessage(`<i class="fas fa-search me-2"></i>Recherche: "${searchTerm}" - ${visibleCount} résultat(s) trouvé(s).`, 'info', 3000);
+        } else {
+          clearJournalMessages();
+        }
+      }
+
+      // Global function to delete remise (admin only) - FIXED
+      window.deleteRemise = function(remiseId) {
+        console.log('deleteRemise called with ID:', remiseId); // Debug log
+        
+        if (!currentUser || currentUser.role !== 'admin') {
+          showJournalMessage('<strong>Accès refusé !</strong><br>Seuls les administrateurs peuvent supprimer des remises.', 'error');
+          return;
+        }
+
+        const remise = savedRemises.find(r => r.id == remiseId || r.id === parseInt(remiseId));
+        if (!remise) {
+          showJournalMessage('<strong>Erreur :</strong><br>Remise non trouvée !', 'error');
+          return;
+        }
+
+        // Update modal title and content
+        document.getElementById('deleteConfirmModalLabel').innerHTML = `
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression
+        `;
+
+        // Build confirmation content
+        const confirmationContent = `
+          <div class="alert alert-warning">
+            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Attention !</h6>
+            <p class="mb-0">Vous êtes sur le point de supprimer définitivement cette remise. Cette action est <strong>irréversible</strong>.</p>
+          </div>
+          
+          <div class="card">
+            <div class="card-header bg-light">
+              <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Détails de la remise à supprimer</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6"><strong>Référence :</strong></div>
+                <div class="col-6">${remise.id}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Utilisateur :</strong></div>
+                <div class="col-6">${remise.prenom} ${remise.nom}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Équipement :</strong></div>
+                <div class="col-6">${remise.type}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Modèle :</strong></div>
+                <div class="col-6">${remise.nom_materiel}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Numéro de série :</strong></div>
+                <div class="col-6">${remise.numero_serie}</div>
+              </div>
+              <div class="row">
+                <div class="col-6"><strong>Date de création :</strong></div>
+                <div class="col-6">${formatDateSafely(remise.date_creation)}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="alert alert-danger mt-3">
+            <strong><i class="fas fa-exclamation-circle me-2"></i>Cette action supprimera définitivement :</strong>
+            <ul class="mb-0 mt-2">
+              <li>Toutes les informations de cette remise</li>
+              <li>L'historique associé</li>
+              <li>Les données ne pourront pas être récupérées</li>
+            </ul>
+          </div>
+        `;
+
+        // Set modal content
+        document.getElementById('deleteConfirmModalBody').innerHTML = confirmationContent;
+
+        // Store remise ID for confirmation
+        document.getElementById('confirmDeleteBtn').setAttribute('data-remise-id', remiseId);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+      };
+
+        // Handle confirm delete button - FIXED with proper event listener setup
+        function setupDeleteConfirmButton() {
+          const confirmBtn = document.getElementById('confirmDeleteBtn');
+          if (confirmBtn) {
+            // Remove any existing event listeners
+            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+            const newConfirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            newConfirmBtn.addEventListener('click', async function() {
+              console.log('Confirm delete button clicked');
+              const remiseId = this.getAttribute('data-remise-id');
+              console.log('Deleting remise ID:', remiseId);
+              
+              if (remiseId) {
+                // Close modal first
+                const modalElement = document.getElementById('deleteConfirmModal');
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                  modal.hide();
+                }
+                
+                try {
+                  const response = await apiClient.deleteRemise(remiseId);
+                  
+                  if (response.success) {
+                    // Find the deleted remise for display
+                    const deletedRemise = savedRemises.find(r => r.id == remiseId);
+                    
+                    // Reload data and refresh displays
+                    await loadDataFromAPI();
+                    updateHistory();
+                    updateAnalytics();
+                    updateSubmissionCount();
+                    
+                    if (deletedRemise) {
+                      showJournalMessage(`<strong>✅ Remise supprimée avec succès !</strong><br>Référence: <strong>${deletedRemise.ref}</strong><br>Utilisateur: <strong>${deletedRemise.prenom} ${deletedRemise.nom}</strong><br>Les données ont été mises à jour.`, 'success');
+                    } else {
+                      showJournalMessage('<strong>✅ Remise supprimée avec succès !</strong><br>Les données ont été mises à jour.', 'success');
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error deleting remise:', error);
+                  showJournalMessage(`<strong>Erreur lors de la suppression :</strong><br>${error.message}`, 'error');
+                }
+              }
+            });
+          }
+        }
+
+      // Global functions for history actions
+      window.reprintPDF = function(remiseId) {
+        const remise = savedRemises.find(r => r.id == remiseId || r.id === parseInt(remiseId));
+        if (!remise) {
+          showJournalMessage('<strong>Erreur :</strong><br>Remise non trouvée !', 'error');
+          return;
+        }
+
+        try {
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const margin = 15;
+          const contentWidth = pageWidth - (margin * 2);
+          
+          const primaryColor = [105, 105, 105];
+          const secondaryColor = [220, 53, 69];
+          const lightGray = [245, 245, 245];
+          const darkGray = [64, 64, 64];
+          
+          // Add watermark
+          doc.setTextColor(250, 250, 250);
+          doc.setFontSize(28);
+          doc.setFont('helvetica', 'bold');
+          doc.text("AMENDIS", pageWidth/2, pageHeight/2, { 
+            align: 'center', 
+            angle: 45 
+          });
+          doc.setFontSize(16);
+          doc.setTextColor(252, 252, 252);
+          doc.text("VEOLIA GROUP", pageWidth/2, pageHeight/2 + 12, { 
+            align: 'center', 
+            angle: 45 
+          });
+          
+          // Header
+          doc.setFillColor(...secondaryColor);
+          doc.rect(0, 0, pageWidth, 30, 'F');
+          
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(18);
+          doc.setFont('helvetica', 'bold');
+          doc.text("AMENDIS", margin, 15);
+          
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Veolia Group", margin, 22);
+          
+          doc.setFontSize(16);
+          doc.setFont('helvetica', 'bold');
+          doc.text("BON DE REMISE DE MATÉRIEL", pageWidth/2, 15, { align: 'center' });
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Direction des Systèmes d'Information", pageWidth/2, 22, { align: 'center' });
+          
+          let y = 40;
+          doc.setFillColor(...lightGray);
+          doc.rect(margin, y, contentWidth, 10, 'F');
+          
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          
+          doc.text(`Référence: ${remise.ref || remise.numero_remise || remise.id}`, margin + 5, y + 6);
+          doc.text(`Date d'émission: ${formatDateSafely(remise.date_creation)}`, pageWidth - margin - 5, y + 6, { align: 'right' });
+          
+          y += 20;
+          
+          function addSectionHeader(title, yPos) {
+            doc.setFillColor(...primaryColor);
+            doc.rect(margin, yPos, contentWidth, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, margin + 5, yPos + 5.5);
+            return yPos + 15;
+          }
+          
+          function addInfoRow(label, value, yPos, isLast = false) {
+            doc.setTextColor(...darkGray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${label}:`, margin + 5, yPos);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.text(value || 'N/A', margin + 60, yPos);
+            
+            if (!isLast) {
+              doc.setDrawColor(220, 220, 220);
+              doc.setLineWidth(0.1);
+              doc.line(margin + 5, yPos + 2, pageWidth - margin - 5, yPos + 2);
+            }
+            
+            return yPos + 6;
+          }
+          
+          // User Information
+          y = addSectionHeader("INFORMATIONS UTILISATEUR", y);
+          const fullName = `${remise.prenom} ${remise.nom}`.trim();
+          
+          const userInfo = [
+            { label: "Nom complet", value: fullName },
+            { label: "Direction/Service", value: remise.direction },
+            { label: "Téléphone", value: remise.telephone },
+            { label: "Affectation", value: remise.affectation }
+          ];
+          
+          userInfo.forEach((item, index) => {
+            y = addInfoRow(item.label, item.value, y, index === userInfo.length - 1);
+          });
+          
+          y += 10;
+          
+          // Equipment Information
+          y = addSectionHeader("DÉTAILS DU MATÉRIEL", y);
+          
+          const equipmentInfo = [
+            { label: "Type d'équipement", value: remise.type },
+            { label: "Nom du matériel", value: remise.nom_materiel },
+            { label: "Numéro de série", value: remise.numero_serie },
+            { label: "État", value: remise.etat },
+            { label: "Catégorie", value: remise.categorie },
+            { label: "Date de remise", value: remise.date_remise }
+          ];
+          
+          equipmentInfo.forEach((item, index) => {
+            y = addInfoRow(item.label, item.value, y, index === equipmentInfo.length - 1);
+          });
+          
+          y += 10;
+          
+          // Administrative Information Section
+          y = addSectionHeader("INFORMATIONS ADMINISTRATIVES", y);
+          
+          const adminInfo = [
+            { label: "Responsable DSI", value: remise.responsable_dsi }
+          ];
+          
+          adminInfo.forEach((item, index) => {
+            y = addInfoRow(item.label, item.value, y, index === adminInfo.length - 1);
+          });
+          
+          // Accessoires section - ALWAYS INCLUDED
+          y += 10;
+          y = addSectionHeader("ACCESSOIRES FOURNIS", y);
+          
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          
+          const accessoires = remise.accessoires?.trim() || "Aucun accessoire fourni";
+          const splitAccessoires = doc.splitTextToSize(accessoires, contentWidth - 10);
+          doc.text(splitAccessoires, margin + 5, y);
+          y += splitAccessoires.length * 4 + 10;
+          
+          // Project section - ALWAYS INCLUDED
+          y = addSectionHeader("PROJET OU OBJECTIF", y);
+          
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          
+          const projet = remise.projet?.trim() || "Non spécifié";
+          const splitProjet = doc.splitTextToSize(projet, contentWidth - 10);
+          doc.text(splitProjet, margin + 5, y);
+          y += splitProjet.length * 4 + 15;Info = [
+            { label: "Type d'équipement", value: remise.type },
+            { label: "Nom du matériel", value: remise.nom_materiel },
+            { label: "Numéro de série", value: remise.numero_serie },
+            { label: "État", value: remise.etat },
+            { label: "Catégorie", value: remise.categorie },
+            { label: "Date de remise", value: remise.date_remise }
+          ];
+          
+          equipmentInfo.forEach((item, index) => {
+            y = addInfoRow(item.label, item.value, y, index === equipmentInfo.length - 1);
+          });
+          
+          // Accessoires section if exists
+          if (remise.accessoires && remise.accessoires.trim()) {
+            y += 10;
+            y = addSectionHeader("ACCESSOIRES FOURNIS", y);
+            
+            doc.setTextColor(...darkGray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            
+            const splitAccessoires = doc.splitTextToSize(remise.accessoires, contentWidth - 10);
+            doc.text(splitAccessoires, margin + 5, y);
+            y += splitAccessoires.length * 4 + 5;
+          }
+          
+          // Project section if exists
+          if (remise.projet && remise.projet.trim()) {
+            y += 10;
+            y = addSectionHeader("PROJET OU OBJECTIF", y);
+            
+            doc.setTextColor(...darkGray);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            
+            const splitProjet = doc.splitTextToSize(remise.projet, contentWidth - 10);
+            doc.text(splitProjet, margin + 5, y);
+            y += splitProjet.length * 4 + 5;
+          }
+          
+          // Agreement section
+          y += 15;
+          doc.setDrawColor(...primaryColor);
+          doc.setLineWidth(0.5);
+          doc.line(margin, y, pageWidth - margin, y);
+          
+          y += 10;
+          doc.setFillColor(248, 248, 248);
+          doc.rect(margin, y, contentWidth, 25, 'F');
+          
+          doc.setTextColor(...primaryColor);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text("ENGAGEMENT ET RESPONSABILITÉ", pageWidth/2, y + 8, { align: 'center' });
+          
+          y += 15;
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          
+          const agreementText = "Je reconnais avoir reçu le matériel mentionné ci-dessus en parfait état de fonctionnement et m'engage à respecter les conditions d'utilisation définies par Amendis.";
+          const splitAgreement = doc.splitTextToSize(agreementText, contentWidth - 10);
+          doc.text(splitAgreement, margin + 5, y + 5);
+          
+          y += splitAgreement.length * 4 + 15;
+          
+          // Signature section
+          const signatureY = y;
+          const signatureWidth = (contentWidth - 20) / 2;
+          
+          doc.setDrawColor(...primaryColor);
+          doc.setLineWidth(0.3);
+          doc.rect(margin, signatureY, signatureWidth, 25, 'S');
+          
+          doc.setTextColor(...darkGray);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text("Signature de l'utilisateur", margin + 5, signatureY + 5);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.text(fullName, margin + 5, signatureY + 10);
+          doc.text(`Date: ${formatDateSafely(remise.date_created || remise.date_remise)}`, margin + 5, signatureY + 15);
+          
+          const rightBoxX = margin + signatureWidth + 10;
+          doc.rect(rightBoxX, signatureY, signatureWidth, 25, 'S');
+          
+          doc.setFont('helvetica', 'bold');
+          doc.text("Signature du Responsable DSI", rightBoxX + 5, signatureY + 5);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.text(remise.responsable_dsi || "DSI Amendis", rightBoxX + 5, signatureY + 10);
+          doc.text(`Date: ${formatDateSafely(remise.date_created || remise.date_remise)}`, rightBoxX + 5, signatureY + 15);
+          
+          // Footer
+          const footerY = pageHeight - 15;
+          doc.setDrawColor(...primaryColor);
+          doc.setLineWidth(0.3);
+          doc.line(margin, footerY, pageWidth - margin, footerY);
+          
+          doc.setTextColor(...primaryColor);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Document officiel Amendis - Veolia Group", pageWidth/2, footerY + 5, { align: 'center' });
+          doc.text(`Réimprimé le ${new Date().toLocaleString('fr-FR')}`, pageWidth/2, footerY + 9, { align: 'center' });
+          
+          // Save with reprint prefix
+          const timestamp = new Date().toISOString().slice(0, 10);
+          const userFullName = fullName.replace(/\s+/g, '_') || 'Utilisateur';
+          const filename = `REPRINT_Bon_Remise_${userFullName}_${remise.id}_${timestamp}.pdf`;
+          doc.save(filename);
+          showJournalMessage(`<strong>PDF réimprimé avec succès !</strong><br>Fichier téléchargé : <em>${filename}</em>`, 'success');
+          
+        } catch (error) {
+          console.error("PDF reprint error:", error);
+          showJournalMessage(`<strong>Erreur lors de la réimpression du PDF :</strong><br>${error.message}`, 'error');
+        }
+      };
+
+      // Enhanced view details function with modal
+      window.viewDetails = function(remiseId) {
+        const remise = savedRemises.find(r => r.id == remiseId || r.id === parseInt(remiseId));
+        if (!remise) {
+          showJournalMessage('<strong>Erreur :</strong><br>Remise non trouvée !', 'error');
+          return;
+        }
+
+        // Update modal title
+        document.getElementById('detailsModalLabel').innerHTML = `
+          <i class="fas fa-info-circle me-2"></i>Détails de la Remise ${remise.id}
+        `;
+
+        // Build detailed content
+        const detailsContent = `
+          <div class="detail-section">
+            <h6><i class="fas fa-user me-2"></i>Informations Utilisateur</h6>
+            <div class="detail-row">
+              <div class="detail-label">Nom complet :</div>
+              <div class="detail-value">${remise.prenom} ${remise.nom}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Téléphone :</div>
+              <div class="detail-value">${remise.telephone}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Fonction :</div>
+              <div class="detail-value">${remise.fonction}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Direction/Service :</div>
+              <div class="detail-value">${remise.direction}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Affectation :</div>
+              <div class="detail-value">${remise.affectation}</div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h6><i class="fas fa-laptop me-2"></i>Informations Matériel</h6>
+            <div class="detail-row">
+              <div class="detail-label">Type d'équipement :</div>
+              <div class="detail-value">${remise.type}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Nom du matériel :</div>
+              <div class="detail-value">${remise.nom_materiel}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Numéro de série :</div>
+              <div class="detail-value">${remise.numero_serie}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">État :</div>
+              <div class="detail-value">${remise.etat}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Catégorie :</div>
+              <div class="detail-value">${remise.categorie}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Date de remise :</div>
+              <div class="detail-value">${remise.date_remise}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Accessoires :</div>
+              <div class="detail-value">${remise.accessoires || 'Aucun'}</div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h6><i class="fas fa-clipboard me-2"></i>Informations Administratives</h6>
+            <div class="detail-row">
+              <div class="detail-label">Numéro de remise :</div>
+              <div class="detail-value"><strong>${remise.id}</strong></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Responsable DSI :</div>
+              <div class="detail-value">${remise.responsable_dsi}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Projet/Objectif :</div>
+              <div class="detail-value">${remise.projet || 'Non spécifié'}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Date de création :</div>
+              <div class="detail-value">${formatDateSafely(remise.date_creation, true)}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Créé par :</div>
+              <div class="detail-value">${remise.created_by}</div>
+            </div>
+          </div>
+        `;
+
+        // Set modal content
+        document.getElementById('detailsModalBody').innerHTML = detailsContent;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+      };
+
+      // Tab switching with content refresh - FIXED
+      document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+          const targetId = e.target.getAttribute('data-bs-target');
+          
+          // Clear any messages when switching tabs
+          clearMessages();
+          clearJournalMessages();
+          
+          if (targetId === '#analytics') {
+            updateAnalytics();
+          } else if (targetId === '#admin') {
+            updateUsersList();
+          } else if (targetId === '#history') {
+            console.log('Loading history tab...'); // Debug log
+            updateHistory();
+          }
+        });
+      });
+
+      // Initial load
+      updateAnalytics();
+      updateUsersList();
+      updateHistory();
+      updateSubmissionCount();
+    }
+  });
+</script>
+</body>
+</html>
